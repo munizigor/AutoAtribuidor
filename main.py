@@ -6,27 +6,59 @@ from bs4 import BeautifulSoup
 # import datetime
 # import re
 import getpass
+import pickle
 
-print('Iniciando o programa...\n\n')
+class Servidor():
+    def __init__(self,matricula):
+        self.matricula = matricula
 
-#Entrar no SEI
-usuario = input('Informe sua matrícula: ')
-password = getpass.getpass('Informe a Senha: ')
-options = Options()
-#options.headless = True #todo: definir se browser ficara ativo ou oculto
-driver = webdriver.Firefox(options=options)
-print('Abrindo o navegador...\n\n')
-driver.get('https://sei.df.gov.br/')
-time.sleep(3)
-driver.find_element_by_id('txtUsuario').send_keys(usuario)
-driver.find_element_by_id('pwdSenha').send_keys(password)
-Select(driver.find_element_by_id('selOrgao')).select_by_value('7')
-print('Logando no SEI...\n\n')
-driver.find_element_by_id('sbmLogin').click()
-time.sleep(3)
-processos_recebidos = driver.find_element_by_id('tblProcessosRecebidos')
-lista_processos = processos_recebidos.text
-processos_recebidos_innerHTML = BeautifulSoup(processos_recebidos.get_attribute("innerHTML"), "html.parser")
+class Operador(Servidor):
+    def __init__(self,matricula):
+        #Recebe a matricula já definida na Parent Class
+        super().__init__(matricula)
+class Processo():
+    def __init__(self,processo):
+        self.processo = processo
+
+class Browser():
+    def start(self):
+        print('Iniciando o programa...\n\n')
+
+        # Entrar no SEI
+        usuario = input('Informe sua matrícula: ')
+        password = getpass.getpass('Informe a Senha: ')
+        options = Options()
+        # options.headless = True #todo: definir se browser ficara ativo ou oculto
+        driver = webdriver.Firefox(options=options)
+        print('Abrindo o navegador...\n\n')
+        driver.get('https://sei.df.gov.br/')
+        time.sleep(3)
+        driver.find_element_by_id('txtUsuario').send_keys(usuario)
+        driver.find_element_by_id('pwdSenha').send_keys(password)
+        Select(driver.find_element_by_id('selOrgao')).select_by_value('7')
+        print('Logando no SEI...\n\n')
+        driver.find_element_by_id('sbmLogin').click()
+        time.sleep(3)
+        processos_recebidos = driver.find_element_by_id('tblProcessosRecebidos').find_element_by_tag_name('tbody').find_elements_by_tag_name('tr')
+        lista_processos = processos_recebidos.text
+        processos_recebidos_innerHTML = BeautifulSoup(processos_recebidos.get_attribute("innerHTML"), "html.parser")
+
+        print(lista_processos)
+        print(processos_recebidos_innerHTML)
+
+Browser().start()
+# TODO: Estruturar os dados abaixo
+# with open('processos_caixa_entrada.obj','w') as file_pi:
+#     for idx, processo in enumerate(processos_recebidos_innerHTML[1:]):
+#         processo_pi = Processo(processos_recebidos[count].children[2].getElementsByTagName('a')[0].innerHTML)
+#         processo_pi.checkbox = processos_recebidos[idx].find_element_by_tag_name('input')
+#         processo_pi.tag = processos_recebidos[count].children[1].getElementsByTagName('a')[0].getAttribute('onmouseover')
+#         processo_pi.visualizado = processos_recebidos[count].children[2].getElementsByTagName('a')[0].getAttribute('class')
+#         processo_pi.descricao = processos_recebidos[count].children[2].getElementsByTagName('a')[0].getAttribute('onmouseover')
+#         processo_pi.link = 'https://sei.df.gov.br/sei/'+str(processos_recebidos[count].children[2].getElementsByTagName('a')[0].getAttribute('href'))
+#         processo_pi.matricula_operador = processos_recebidos[count].children[3].getElementsByTagName('a')[0].innerHTML
+#         pickle.dump(processo_pi, file_pi)
+
 
 # Caso queira aproveitar o resto do código #
 
