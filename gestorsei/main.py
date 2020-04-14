@@ -9,7 +9,30 @@ import getpass
 import unicodedata
 import re
 import csv
+import os
 
+# Funcoes de inicio
+clear = lambda: os.system('cls' if os.name=='nt' else 'clear')
+
+banner = ''' \n\n\n\n
+  /$$$$$$                        /$$                                /$$$$$$  /$$$$$$$$ /$$$$$$
+ /$$__  $$                      | $$                               /$$__  $$| $$_____/|_  $$_/
+| $$  \__/  /$$$$$$   /$$$$$$$ /$$$$$$    /$$$$$$   /$$$$$$       | $$  \__/| $$        | $$  
+| $$ /$$$$ /$$__  $$ /$$_____/|_  $$_/   /$$__  $$ /$$__  $$      |  $$$$$$ | $$$$$     | $$  
+| $$|_  $$| $$$$$$$$|  $$$$$$   | $$    | $$  \ $$| $$  \__/       \____  $$| $$__/     | $$  
+| $$  \ $$| $$_____/ \____  $$  | $$ /$$| $$  | $$| $$             /$$  \ $$| $$        | $$  
+|  $$$$$$/|  $$$$$$$ /$$$$$$$/  |  $$$$/|  $$$$$$/| $$            |  $$$$$$/| $$$$$$$$ /$$$$$$
+ \______/  \_______/|_______/    \___/   \______/ |__/             \______/ |________/|______/
+                             
+                             
+                             Desenvolvido por: Igor MUNIZ da Silva
+                                         MIT License
+                                             2020
+                                             
+==============================================================================================
+'''
+
+# Definicao de Classes
 class Servidor():
     def __init__(self,matricula):
         self.matricula = matricula
@@ -23,16 +46,19 @@ class Operador(Servidor):
         self.setor = setor
     def __str__(self):
         return self.matricula+' - '+self.setor
+
 class Processo():
     def __init__(self,processo):
         self.processo = processo
     def __str__(self):
         return self.processo+' - '+self.descricao
+
 class Browser():
     def login(self):
-        print('Iniciando o programa...\n\n')
+        clear()
+        print(banner)
         # Entrar no SEI
-        usuario = input('Informe sua matrícula: ')
+        usuario = input('\n\nInforme sua matrícula: ')
         password = getpass.getpass('Informe a Senha: ')
         options = Options()
         # options.headless = True #todo: definir se browser ficara ativo ou oculto
@@ -48,6 +74,7 @@ class Browser():
         #TODO:Se erro de login
         time.sleep(3)
         return driver
+
 class ProcessoHandler(Browser):
     def abrir_processos(self,filepath):
         driver = super().login()
@@ -86,7 +113,7 @@ class ProcessoHandler(Browser):
     def ler_processos(self):
         driver = super().login()
         # return driver
-        with open('processos_recebidos.csv', mode='w') as processos_save:
+        with open('csv/processos_recebidos.csv', mode='w') as processos_save:
             processos_writer = csv.writer(processos_save)
             processos_writer.writerow(['Processo','Descricao','Anotacoes','Tag'])
             while True:
@@ -163,7 +190,7 @@ class Pesquisa(Browser):
         limit_count = int(limit_count[-1])
         print(limit_count)
         count=0
-        with open('processos_save.csv', mode='w') as processos_save:
+        with open('csv/processos_save.csv', mode='w') as processos_save:
             processos_writer = csv.writer(processos_save)
             processos_writer.writerow(['Título', 'Processo'])
             while count<limit_count:
@@ -186,6 +213,6 @@ def limpastr(palavra):
     # Usa expressão regular para retornar a palavra apenas com números, letras e espaço
     return re.sub('[^a-zA-Z0-9 ,\'\\\]', '', palavraSemAcento)
 
-# ProcessoHandler().abrir_processos('processos_sample2.csv')
-teste = ProcessoHandler().ler_processos()
+# ProcessoHandler().abrir_processos('csv/processos_sample2.csv')
+# ProcessoHandler().ler_processos()
 # Pesquisa().salvar_processos('110001369')
