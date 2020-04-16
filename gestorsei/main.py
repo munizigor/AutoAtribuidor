@@ -13,6 +13,9 @@ import os
 
 # Funcoes de inicio
 clear = lambda: os.system('cls' if os.name=='nt' else 'clear')
+main_path = os.path.dirname(os.path.abspath(__file__))
+def full_path(file):
+    return os.path.join(main_path,file)
 
 banner = ''' \n\n\n\n
   /$$$$$$                        /$$                                /$$$$$$  /$$$$$$$$ /$$$$$$
@@ -113,7 +116,7 @@ class ProcessoHandler(Browser):
     def ler_processos(self):
         driver = super().login()
         # return driver
-        with open('csv/processos_recebidos.csv', mode='w') as processos_save:
+        with open(full_path('csv/processos_recebidos.csv'), mode='w') as processos_save:
             processos_writer = csv.writer(processos_save)
             processos_writer.writerow(['Processo','Descricao','Anotacoes','Tag'])
             while True:
@@ -190,7 +193,7 @@ class Pesquisa(Browser):
         limit_count = int(limit_count[-1])
         print(limit_count)
         count=0
-        with open('csv/processos_save.csv', mode='w') as processos_save:
+        with open(full_path('csv/processos_save.csv'), mode='w') as processos_save:
             processos_writer = csv.writer(processos_save)
             processos_writer.writerow(['Título', 'Processo'])
             while count<limit_count:
@@ -199,6 +202,12 @@ class Pesquisa(Browser):
                 count+=10
                 driver.execute_script('navegar('+str(count)+')')
                 time.sleep(7)
+class Atribuir():
+    def __init__(self):
+        ProcessoHandler().ler_processos()
+        with open(full_path('csv/processos_recebidos.csv'), mode='r') as processos_read:
+            # TODO: seguir tutorial https://github.com/justmarkham/pycon-2016-tutorial/blob/master/tutorial_with_output.ipynb
+            pass
 
 def entre_parenteses(x):
     return x[x.find("(")+1:x.rfind(")")]
@@ -211,8 +220,9 @@ def limpastr(palavra):
     palavraSemAcento = u"".join([c for c in nfkd if not unicodedata.combining(c)])
 
     # Usa expressão regular para retornar a palavra apenas com números, letras e espaço
-    return re.sub('[^a-zA-Z0-9 ,\'\\\]', '', palavraSemAcento)
+    palavra_com_espacos = re.sub('[^a-zA-Z0-9 ,\'\\\]', ' ', palavraSemAcento)
+    return ' '.join(palavra_com_espacos.split())
 
-# ProcessoHandler().abrir_processos('csv/processos_sample2.csv')
+# ProcessoHandler().abrir_processos(full_path('csv/processos_sample2.csv'))
 # ProcessoHandler().ler_processos()
 # Pesquisa().salvar_processos('110001369')

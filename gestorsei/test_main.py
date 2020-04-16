@@ -1,5 +1,5 @@
 import unittest
-import main
+from . import main
 
 #todo: pegar do video do Corey (https://www.youtube.com/watch?v=6tNS--WetLI) em 28m30s esquema pra criar um html-source pre-salvo pra testes
 class TestMain(unittest.TestCase):
@@ -34,5 +34,15 @@ class TestMain(unittest.TestCase):
                          'Serviço Administrativo)(Pessoal(Texto)')
     def test_limpastr(self):
         self.assertEqual(main.limpastr('Oboé miçanga àêáéíóû'),'Oboe micanga aeaeiou')
+        self.assertEqual(main.limpastr('OF.SN.2020 TRT -  10ªREG  VT GAMA'),'OF SN 2020 TRT 10aREG VT GAMA')
+        self.assertEqual(main.limpastr('CBMDF - Serviço Administrativo Diário'),'CBMDF Servico Administrativo Diario')
+        self.assertEqual(main.limpastr('.OF.20.2020 SEJUSP SUINT SSP MG '),'OF 20 2020 SEJUSP SUINT SSP MG')
+        self.assertEqual(main.entre_parenteses(
+            "return infraTooltipMostrar('.OF. 20.2020 SEJUSP SUINT SSP MG','Pessoal: Viagem a Serviço (Diárias, Passagens e Relatório)');").lower(),
+                         "'of 20 2020 sejusp suint ssp mg','pessoal viagem a servico diarias, passagens e relatorio'")
+        self.assertEqual(main.limpastr(main.entre_parenteses(
+            "return infraTooltipMostrar('.OF. 20.2020 SEJUSP SUINT SSP MG','Pessoal: Viagem a Serviço (Diárias, Passagens e Relatório)');")).lower(),
+                                       "'of 20 2020 sejusp suint ssp mg','pessoal viagem a servico diarias, passagens e relatorio'")
+
 if __name__ == '__main__':
     unittest.main()
