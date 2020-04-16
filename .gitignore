@@ -1,6 +1,6 @@
 venv/
 .idea/
-gestorsei/geckodriver.log
+geckodriver.log
 *.csv
 *.pyc
 /__pycache__/
