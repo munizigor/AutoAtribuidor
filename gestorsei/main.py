@@ -135,15 +135,15 @@ class ProcessoHandler(Browser):
                         pass
                     else:
                         for child in children[1].find_all('a'):
-                            processo_pi.anotacao = entre_parenteses(child['onmouseover']) if (
+                            processo_pi.anotacao = limpa_parenteses(child['onmouseover']) if (
                                         'anotacao_registrar' in child['href']) else processo_pi.anotacao
-                            processo_pi.tag = entre_parenteses(child['onmouseover']) if (
+                            processo_pi.tag = limpa_parenteses(child['onmouseover']) if (
                                         'andamento_marcador_gerenciar' in child['href']) else processo_pi.tag
                     # processo_pi.visualizado = 'processoVisualizado' in children[2].find('a')['class']
                     # processo_pi.visitado = 'processoVisitado' in children[2].find('a')['class']
-                    processo_pi.descricao = limpastr(entre_parenteses(children[2].find('a')['onmouseover'])).lower()
+                    processo_pi.descricao = limpa_str_parenteses(children[2].find('a')['onmouseover'])
                     # processo_pi.link = 'https://sei.df.gov.br/sei/' + children[2].find('a')['href']
-                    # processo_pi.matricula_operador = entre_parenteses(children[3].text)
+                    # processo_pi.matricula_operador = limpa_parenteses(children[3].text)
                     # if ('dependente' in processo_pi.descricao) or ('beneficiario' in processo_pi.descricao) or (
                     #         'luto' in processo_pi.descricao) or ('funeral' in processo_pi.descricao) or (
                     #         'moradia' in processo_pi.descricao):
@@ -209,9 +209,9 @@ class Atribuir():
             # TODO: seguir tutorial https://github.com/justmarkham/pycon-2016-tutorial/blob/master/tutorial_with_output.ipynb
             pass
 
-def entre_parenteses(x):
+def limpa_parenteses(x):
     return x[x.find("(")+1:x.rfind(")")]
-def limpastr(palavra):
+def limpa_str(palavra):
     # Unicode normalize transforma um caracter em seu equivalente em latin.
     if palavra != None:
         nfkd = unicodedata.normalize('NFKD', palavra)
@@ -221,7 +221,12 @@ def limpastr(palavra):
 
     # Usa expressão regular para retornar a palavra apenas com números, letras e espaço
     palavra_com_espacos = re.sub('[^a-zA-Z0-9 ,\'\\\]', ' ', palavraSemAcento)
-    return ' '.join(palavra_com_espacos.split())
+    palavra_com_espacos = ' '.join(palavra_com_espacos.split())
+    return palavra_com_espacos.replace('\' ','\'').replace(' \'','\'')
+def limpa_str_parenteses(x):
+    return limpa_str(limpa_parenteses(x)).lower()
+def tooltip_string_to_list(x):
+    return limpa_str_parenteses(x).split('\',\'')
 
 # ProcessoHandler().abrir_processos(full_path('csv/processos_sample2.csv'))
 # ProcessoHandler().ler_processos()
