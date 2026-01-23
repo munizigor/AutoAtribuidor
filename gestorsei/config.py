@@ -1,15 +1,19 @@
 # gestorsei/config.py
 from pathlib import Path
+from dotenv import load_dotenv
+import os
 
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = BASE_DIR.parent  # ajuste se necessário
+
+load_dotenv(dotenv_path=PROJECT_DIR / ".env", override=False)
+SEI_URL = os.getenv("SEI_URL")
+FIREFOX_BINARY = os.getenv("FIREFOX_BINARY")
 
 CSV_DIR = PROJECT_DIR / "csv"
 DEBUG_LOG_PATH = PROJECT_DIR / ".cursor" / "debug.log"
 GECKO_LOG_PATH = PROJECT_DIR / "geckodriver.log"
 
-SEI_URL = "https://sei.df.gov.br/"
-FIREFOX_BINARY = r"C:\Program Files\Mozilla Firefox\firefox.exe"
 
 BANNER = r"""
   /$$$$$$  /$$$$$$$$ /$$$$$$          /$$$$$$$  /$$$$$$ /$$         /$$$$$$  /$$$$$$$$

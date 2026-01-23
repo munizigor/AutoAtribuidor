@@ -8,6 +8,7 @@ class SeiClient:
         self.driver = driver
 
     def open(self, url: str):
+        print(f"Abrindo o SEI em: {url}")
         self.driver.get(url)
         time.sleep(3)
 

@@ -1,6 +1,6 @@
 # gestorsei/cli.py
 import getpass
-from gestorsei.config import SEI_URL, FIREFOX_BINARY, GECKO_LOG_PATH, DEBUG_LOG_PATH, BANNER, CSV_DIR
+from gestorsei.config import SEI_URL, FIREFOX_BINARY, GECKO_LOG_PATH, BANNER, CSV_DIR
 from gestorsei.webdriver_factory import create_firefox_driver
 from gestorsei.sei_client import SeiClient
 from gestorsei.handlers.processos import consultar_andamentos, ler_processos_recebidos
