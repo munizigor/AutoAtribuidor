@@ -268,18 +268,7 @@ Se o menu mudar, esse trecho deve ser atualizado para um seletor mais estável.
 ## 🧪 Troubleshooting
 
 ### Erro: Firefox não encontrado
-✔ Ajuste `FIREFOX_BINARY` em:
-
-`gestorsei/config.py`
-
----
-
-### Erro: GeckoDriver ou Selenium não inicia
-O projeto usa `webdriver-manager`, mas você pode configurar manualmente via variável de ambiente:
-
-```bash
-set GECKODRIVER_PATH=C:\caminho\para\geckodriver.exe
-```
+✔ Ajuste `FIREFOX_BINARY` no arquivo `.env`
 
 ---
 
@@ -309,7 +298,7 @@ Recomendações:
 - [ ] Exportar logs estruturados (JSON/NDJSON)
 - [ ] Trocar XPaths frágeis por seletores mais estáveis
 - [ ] Transformar em pacote instalável (`pip install -e .`)
-- [ ] Criar `.env.example` e CSVs de exemplo
+- [ ] Criar CSVs de exemplo
 
 ---
 

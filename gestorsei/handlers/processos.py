@@ -1,23 +1,20 @@
 # gestorsei/handlers/processos.py
+import csv
 import random
 import time
+from datetime import datetime
 from pathlib import Path
 
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoAlertPresentException, JavascriptException, NoSuchElementException
+from selenium.common.exceptions import NoAlertPresentException, JavascriptException, NoSuchElementException, TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 from gestorsei.domain.models import Processo
 from gestorsei.utils.strings import limpa_parenteses, limpa_str_parenteses
 from gestorsei.utils.io_csv import read_csv_rows, write_csv
-
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
 
 def abrir_processo(sei, num_processo):
     """Busca um processo específico e garante que a página carregou."""
@@ -37,46 +34,125 @@ def consultar_andamentos(sei, csv_path: Path):
     driver = sei.driver
     wait = WebDriverWait(driver, 15)
 
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_file = csv_path.parent / f"historico_andamentos_completo_{timestamp}.csv"
+    
+    # Prepara cabeçalho
+    with output_file.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["Processo", "Data/Hora", "Unidade", "Usuário", "Descrição"])
+    
+    print(f"Arquivo de saída criado: {output_file}")
+
     for line in read_csv_rows(csv_path):
         if not line or not line[0].strip():
             continue
 
         proc = line[0].strip()
         print(f"Processando: {proc}")
+        
+        # Buffer local para este processo
+        process_history_data = []
 
         try:
             # 1. Abre o processo e já entra no iframe da Árvore
             abrir_processo(sei, proc)
 
             # 2. Localiza e clica no botão de Consultar Andamento
-            # Usamos o ID que você forneceu: divConsultarAndamento
-            # Espera o frame da árvore (menu esquerdo) carregar, pois é onde os botões ficam
             wait.until(EC.frame_to_be_available_and_switch_to_it((By.ID, "ifrArvore")))
             botao_andamento = wait.until(EC.element_to_be_clickable((By.ID, "divConsultarAndamento")))
             botao_andamento.click()
 
-            # Espera o frame da árvore (menu esquerdo) carregar, pois é onde os botões ficam
+            # Volta para o default e entra nos iframes de visualização
             driver.switch_to.default_content()
             wait.until(EC.frame_to_be_available_and_switch_to_it((By.ID, "ifrConteudoVisualizacao")))
-            wait.until(EC.frame_to_be_available_and_switch_to_it((By.ID, "ifrVisualizacao")))
+            
+            # Aqui pode ser ifrVisualizacao ou direto o conteudo, dependendo da versao do SEI
+            # O código original assumia ifrVisualizacao. Vamos manter, mas ficar atentos.
+            try:
+                wait.until(EC.frame_to_be_available_and_switch_to_it((By.ID, "ifrVisualizacao")))
+            except TimeoutException:
+                # As vezes não tem ifrVisualizacao se abrir direto na div
+                pass
 
-            print(f"✓ Andamentos consultados para {proc}")
-            
-            # Aqui você pode adicionar a lógica para ler a tabela de andamentos se precisar
-            
+            # 3. Garante que está exibindo o histórico completo (P) e não resumido (R)
+            try:
+                # O elemento hidden hdnTipoHistorico guarda o estado atual (P ou R)
+               # Pode não existir se a página não carregou bem, mas o wait cuida
+                hdn_tipo = wait.until(EC.presence_of_element_located((By.ID, "hdnTipoHistorico")))
+                valor_tipo = hdn_tipo.get_attribute("value")
+
+                if valor_tipo != "P":
+                     # ALTERAÇÃO: Ao invés de usar a função JS verHistorico('P'),
+                    # setamos o valor do hidden e submetemos o formulário.
+                    driver.execute_script("arguments[0].value = 'P';", hdn_tipo)
+                    hdn_tipo.submit()
+                    time.sleep(1) 
+
+                # Espera a tabela de historico estar disponivel
+                wait.until(EC.presence_of_element_located((By.ID, "tblHistorico")))
+                
+            except (NoSuchElementException, Exception):
+                print(f"Erro ao verificar tipo de histórico ou carregar página para {proc}")
+                process_history_data.append([proc, "ERRO: Falha ao carregar histórico", "", "", ""])
+                continue
+
+            # 4. Loop Recursivo de Paginação
+            while True:
+                # Parse da tabela
+                soup = BeautifulSoup(driver.page_source, "html.parser")
+                tabela = soup.find("table", {"id": "tblHistorico"})
+
+                if tabela:
+                    rows = tabela.find_all("tr")
+                    # Pula o cabeçalho (primeira tr)
+                    for row in rows[1:]:
+                        cols = row.find_all("td")
+                        cols_text = [c.get_text() for c in cols]
+                        if len(cols_text) >= 4:
+                            # Assumindo indices padrao
+                            data_hora = cols_text[0]
+                            unidade = cols_text[1]
+                            usuario = cols_text[2]
+                            descricao = cols_text[3]
+                            process_history_data.append([proc, data_hora, unidade, usuario, descricao])
+                
+                # Verifica paginação
+                try:
+                    proxima = driver.find_element(By.ID, "lnkInfraProximaPaginaInferior")
+                    if proxima.is_displayed() and proxima.is_enabled():
+                        proxima.click()
+                        # Espera recarregar a tabela (staleness ou element present)
+                        time.sleep(1) 
+                        wait.until(EC.presence_of_element_located((By.ID, "tblHistorico")))
+                    else:
+                        break
+                except NoSuchElementException:
+                    break
+
+            print(f"✓ Andamentos (Histórico) extraídos para {proc}: {len(process_history_data)} registros.")
+
         except TimeoutException:
-            print(f"✗ Erro: Botão ou Processo {proc} não encontrado.")
+            print(f"✗ Erro: Timeout ao processar {proc}.")
+            process_history_data.append([proc, "ERRO: Timeout ao tentar localizar elementos ou carregar página", "", "", ""])
         except Exception as e:
             print(f"⚠ Erro inesperado no processo {proc}: {e}")
+            process_history_data.append([proc, f"ERRO: {str(e)}", "", "", ""])
         finally:
-            # Garante que volta para o conteúdo principal para a próxima busca
             driver.switch_to.default_content()
+            
+            # --- Incremental Save ---
+            if process_history_data:
+                try:
+                    with output_file.open("a", encoding="utf-8", newline="") as f:
+                        writer = csv.writer(f)
+                        for row in process_history_data:
+                            writer.writerow(row)
+                except Exception as csv_err:
+                    print(f"Erro ao salvar CSV incremental: {csv_err}")
 
-            # --- Throttling Randômico ---
-            # random.uniform gera um número flutuante (ex: 3.42s) o que é menos "robótico"
-            delay = random.uniform(1, 2)
-            print(f"Aguardando {delay:.2f}s antes da próxima requisição...")
-            time.sleep(delay)
+            # Throttling
+            time.sleep(random.uniform(1, 2))
 
 def ler_processos_recebidos(sei, output_csv_path: Path):
     """
