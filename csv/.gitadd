@@ -1,0 +1,7 @@
+venv/
+.idea/
+*.env
+geckodriver.log
+*.csv
+*.pyc
+/__pycache__/

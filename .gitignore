@@ -1,5 +1,6 @@
 venv/
 .idea/
+*.env
 geckodriver.log
 *.csv
 *.pyc
