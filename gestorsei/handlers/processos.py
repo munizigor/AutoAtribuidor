@@ -152,7 +152,7 @@ def consultar_andamentos(sei, csv_path: Path):
                     print(f"Erro ao salvar CSV incremental: {csv_err}")
 
             # Throttling
-            time.sleep(random.uniform(1, 2))
+            time.sleep(random.uniform(3, 5))
 
 def ler_processos_recebidos(sei, output_csv_path: Path):
     """
